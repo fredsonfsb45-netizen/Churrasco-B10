@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Churrasco do B10 - Gestão Premium</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary: #f97316;       /* Laranja Fogo */
+            --primary-dark: #c2410c;  /* Laranja Escuro/Brasa */
+            --secondary: #ef4444;     /* Vermelho Carne */
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --text: #1e293b;
+            --text-light: #475569;
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.8);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 50%, #fdba74 100%);
+            background-attachment: fixed;
+            color: var(--text);
+            padding-bottom: 90px;
+            min-height: 100vh;
+        }
+
+        /* Glassmorphism Classes */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+        }
+
+        /* Navigation */
+        nav {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            padding: 10px;
+            overflow-x: auto;
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        nav button {
+            border: none;
+            background: transparent;
+            color: var(--text-light);
+            cursor: pointer;
+            padding: 12px 18px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            white-space: nowrap;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        nav button:hover {
+            background: rgba(255, 255, 255, 0.5);
+            color: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        nav button.active {
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            color: white;
+            box-shadow: 0 4px 12px rgba(192, 132, 252, 0.4);
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 24px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.08);
+        }
+
+        h3 {
+            margin-bottom: 20px;
+            color: var(--primary-dark);
+            font-weight: 800;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Grid e Stats */
+        .grid-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            padding: 24px;
+            border-radius: 16px;
+            border-left: 6px solid;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            right: -20px;
+            top: -20px;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .stat-card small {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-card b {
+            font-size: 1.8rem;
+            margin-top: 8px;
+            color: var(--text);
+            font-weight: 800;
+        }
+
+        /* Forms e Botões */
+        input, select, textarea {
+            width: 100%;
+            padding: 14px 16px;
+            margin: 8px 0 16px;
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            border-radius: 12px;
+            font-size: 15px;
+            background: rgba(255, 255, 255, 0.6);
+            color: var(--text);
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            background: rgba(255, 255, 255, 0.9);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(192, 132, 252, 0.2);
+        }
+
+        .grid-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .grid-form {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            box-shadow: 0 4px 15px rgba(147, 51, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(147, 51, 234, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #34d399, var(--success));
+            color: white;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-outline {
+            border: 2px solid var(--primary);
+            color: var(--primary-dark);
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Tabelas */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: 12px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            min-width: 500px;
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.7);
+            text-align: left;
+            padding: 16px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+            color: var(--text-light);
+            border-bottom: 2px solid rgba(255,255,255,0.8);
+        }
+
+        th:first-child { border-top-left-radius: 12px; }
+        th:last-child { border-top-right-radius: 12px; }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.5);
+            font-size: 15px;
+            background: rgba(255,255,255,0.3);
+            transition: background 0.2s;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Tabs and Animations */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        /* Modal */
+        #modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        #modal.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        #modal .card {
+            width: 90%;
+            max-width: 400px;
+            animation: modalPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes modalPop {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        /* Toasts Container */
+        #toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-left: 5px solid var(--primary);
+            padding: 16px 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            color: var(--text);
+            font-weight: 500;
+            transform: translateX(120%);
+            animation: toastEnter 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        .toast.toast-error { border-left-color: var(--danger); }
+        .toast.toast-success { border-left-color: var(--success); }
+
+        .toast.hide {
+            animation: toastLeave 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes toastEnter {
+            to { transform: translateX(0); }
+        }
+        @keyframes toastLeave {
+            to { transform: translateX(120%); opacity: 0; }
+        }
+
+        /* Logo Header */
+        .app-header {
+            text-align: center;
+            padding: 24px 20px 10px;
+        }
+
+        .logo-text {
+            font-size: 2.4rem;
+            font-weight: 800;
+            letter-spacing: -1.5px;
+            color: var(--primary-dark);
+            margin-bottom: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .logo-text span {
+            background: linear-gradient(135deg, var(--secondary), #f97316);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-sub {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+        }
+        
+    </style>
+</head>
+<body>
+
+<header class="app-header">
+    <div class="logo-text">
+        🔥 Churrasco <span>do B10</span>
+    </div>
+    <div class="logo-sub">Gestão de Carnes e Bebidas</div>
+</header>
+
+<nav>
+    <button onclick="showTab(event, 'tab-home')" class="nav-btn active">🏠 Início</button>
+    <button onclick="showTab(event, 'tab-insumos')" class="nav-btn">🛒 Insumos</button>
+    <button onclick="showTab(event, 'tab-estoque')" class="nav-btn">📦 Produtos</button>
+    <button onclick="showTab(event, 'tab-venda')" class="nav-btn">💰 Venda</button>
+    <button onclick="showTab(event, 'tab-analises')" class="nav-btn">📊 Análises</button>
+    <button onclick="showTab(event, 'tab-ajustes')" class="nav-btn">⚙️ Ajustes</button>
+</nav>
+
+<div class="container">
+    
+    <!-- Aba Home -->
+    <div id="tab-home" class="tab-content active">
+        <div class="grid-stats">
+            <div class="stat-card glass" style="border-left-color: var(--warning);">
+                <small>Capital pendente a Receber</small>
+                <b id="dash-fiado">R$ 0,00</b>
+            </div>
+            <div class="stat-card glass" style="border-left-color: var(--primary);">
+                <small>Caixa Atual (Real)</small>
+                <b id="dash-caixa">R$ 0,00</b>
+            </div>
+        </div>
+        
+        <div class="card glass" id="painel-investimento">
+            <h3 style="color: var(--secondary)">⚖️ Investimento vs. Retorno</h3>
+            <div class="grid-stats" style="margin-bottom: 0;">
+                <div class="stat-card glass" style="border-left-color: var(--danger);">
+                    <small>Despesas Totais</small>
+                    <b id="dash-custo-insumos">R$ 0,00</b>
+                </div>
+                <div class="stat-card glass" style="border-left-color: var(--success);">
+                    <small>Faturamento Total</small>
+                    <b id="dash-faturamento">R$ 0,00</b>
+                </div>
+                <div class="stat-card glass" style="border-left-color: var(--primary);">
+                    <small>Lucro Real Limpo</small>
+                    <b id="dash-lucro-real">R$ 0,00</b>
+                </div>
+            </div>
+            <p style="margin-top: 15px; font-size: 13px; color: var(--text-light);">
+                <b>Despesas Totais:</b> Valor total investido em Insumos somado ao Custo Original de Aquisição dos Produtos no estoque.<br>
+                <b>Faturamento Total:</b> Todo o dinheiro que entrou de Vendas (Inclusive saldo A Receber).<br>
+            </p>
+        </div>
+
+        <div class="card glass">
+            <h3>⚡ Acesso Rápido</h3>
+            <button class="btn btn-primary" onclick="showTab({currentTarget: document.querySelectorAll('.nav-btn')[2]}, 'tab-estoque')">
+                ✨ Cadastrar Novo Produto
+            </button>
+        </div>
+
+        <div class="card glass">
+            <h3>📦 Status do Estoque</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead><tr><th>Produto</th><th>Qtd Disponível</th><th>Status</th></tr></thead>
+                    <tbody id="corpo-resumo"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Aba Insumos (Despesas) -->
+    <div id="tab-insumos" class="tab-content">
+        <div class="card glass">
+            <h3>🛒 Despesas com Insumos</h3>
+            <p style="font-size: 13px; color: var(--text-light); margin-bottom: 15px;">Registre aqui todas as compras de Carvão, Carnes (por Kg), Bebidas Fechadas e outros materiais. Isso deduzirá do seu Lucro Real diretamente no Início.</p>
+            <input type="text" id="i-nome" placeholder="Nome da Despesa / Insumo (Ex: 10kg Alcatra)">
+            <div class="grid-form">
+                <input type="number" id="i-valor" placeholder="Valor Gasto na Compra (R$)" min="0" step="0.01">
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button class="btn btn-outline" style="margin-bottom: 0; padding: 12px; font-size: 14px;" onclick="document.getElementById('i-nome').value='';document.getElementById('i-valor').value='';">🗑️ Limpar</button>
+                <button class="btn btn-primary" style="margin-bottom: 0; flex: 2;" onclick="addInsumo()">✅ Registrar Nova Despesa</button>
+            </div>
+        </div>
+        
+        <div class="card glass">
+            <h3>📋 Histórico de Compras Realizadas</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead><tr><th>Descrição (Insumo)</th><th>Valor Gasto</th><th>Data</th><th style="text-align:center;">Ação</th></tr></thead>
+                    <tbody id="corpo-insumos"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Aba Cadastro Estoque -->
+    <div id="tab-estoque" class="tab-content">
+        <div class="card glass">
+            <h3>📦 Cadastro de Produto</h3>
+            <input type="text" id="p-nome" placeholder="Nome ou Descrição do Produto">
+            <div class="grid-form">
+                <input type="number" id="p-qtd" placeholder="Quantidade em Estoque" min="0">
+                <input type="number" id="p-custo" placeholder="Custo de Compra (R$)" min="0" step="0.01">
+                <input type="number" id="p-preco" placeholder="Preço de Venda (R$)" min="0" step="0.01">
+                <input type="number" id="p-min" placeholder="Alerta de Estoque Mínimo" min="1">
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button class="btn btn-outline" style="margin-bottom: 0; padding: 12px; font-size: 14px;" onclick="limparProduto()">🗑️ Limpar</button>
+                <button class="btn btn-success" style="margin-bottom: 0; flex: 2;" onclick="addProduto()">✅ Salvar Produto no Estoque</button>
+            </div>
+        </div>
+        
+        <div class="card glass">
+            <h3>📋 Produtos Cadastrados</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead><tr><th>Produto</th><th>Custo Unit.</th><th>Preço Unit.</th><th>Qtd</th><th style="text-align:center;">Ação</th></tr></thead>
+                    <tbody id="corpo-produtos"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Aba Registrar Venda -->
+    <div id="tab-venda" class="tab-content">
+        <div class="card glass">
+            <h3>💰 Registrar Nova Venda</h3>
+            <input type="text" id="v-cliente" placeholder="Nome do Cliente (Opcional)">
+            <label style="font-size: 13px; font-weight: 600; color: var(--text-light); margin-left: 5px;">Selecione o Produto:</label>
+            <select id="v-produto"></select>
+            
+            <div class="grid-form">
+                <div>
+                    <label style="font-size: 13px; font-weight: 600; color: var(--text-light); margin-left: 5px;">Quantidade:</label>
+                    <input type="number" id="v-qtd" value="1" min="1">
+                </div>
+                <div>
+                    <label style="font-size: 13px; font-weight: 600; color: var(--text-light); margin-left: 5px;">Forma de Pagamento:</label>
+                    <select id="v-tipo">
+                        <option value="pago">💵 Pagamento Imediato (Caixa)</option>
+                        <option value="fiado">📝 A Prazo / Fiado (A Receber)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button class="btn btn-outline" style="margin-bottom: 0; padding: 12px; font-size: 14px;" onclick="limparVenda()">🗑️ Limpar</button>
+                <button class="btn btn-primary" style="margin-bottom: 0; flex: 2;" onclick="vender()">🚀 Finalizar Venda</button>
+            </div>
+        </div>
+
+        <div class="card glass">
+            <h3 style="color: var(--warning)">📝 Contas a Receber (Fiado)</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead><tr><th>Cliente/Data</th><th>Item/Qtd</th><th>Valor Original</th><th style="text-align:center;">Ação</th></tr></thead>
+                    <tbody id="corpo-fiados"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card glass">
+            <h3 style="color: var(--success)">✅ Fiados Recebidos (Histórico)</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead><tr><th>Cliente/Data</th><th>Item</th><th>Valor Recebido</th><th style="text-align:center;">Ação</th></tr></thead>
+                    <tbody id="corpo-fiados-pagos"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Aba Análises -->
+    <div id="tab-analises" class="tab-content">
+        <div class="card glass">
+            <h3>📈 Volume de Vendas (Unidades)</h3>
+            <div class="chart-container"><canvas id="chartVolume"></canvas></div>
+        </div>
+        <div class="card glass">
+            <h3>💵 Ranking de Oportunidade (Lucratividade)</h3>
+            <div class="chart-container"><canvas id="chartLucro"></canvas></div>
+        </div>
+    </div>
+
+    <!-- Aba Ajustes -->
+    <div id="tab-ajustes" class="tab-content">
+        <div class="card glass">
+            <h3>📥 Backup & Exportação (Excel)</h3>
+            <p style="font-size: 14px; color: var(--text-light); margin-bottom: 15px;">Mantenha seus dados seguros fazendo backups regulares na nuvem ou no seu computador.</p>
+            <button class="btn btn-outline" onclick="exportarExcel()">⬇️ Fazer Download dos Dados (.xlsx)</button>
+            <hr style="border:0; border-top: 1px dashed var(--glass-border); margin: 20px 0;">
+            <label style="font-size: 13px; font-weight: 600; color: var(--text-light);">Restaurar Backup:</label>
+            <input type="file" id="input-excel" accept=".xlsx" style="background: rgba(255,255,255,0.4);">
+            <button class="btn btn-primary" onclick="importarExcel()">🔄 Restaurar Planilha</button>
+        </div>
+        <div class="card glass">
+            <h3>💸 Aporte de Capital / Investimento</h3>
+            <p style="font-size: 14px; color: var(--text-light); margin-bottom: 15px;">Insira um valor investido externamente para corrigir o Caixa Real absoluto.</p>
+            <input type="number" id="cap-valor" placeholder="Valor do aporte (R$)" min="0" step="0.01">
+            <button class="btn btn-success" onclick="addCapital()">💰 Registrar Entrada</button>
+        </div>
+        
+        <div class="card glass" style="border: 2px solid var(--danger); background: rgba(255,255,255,0.7)">
+            <h3 style="color: var(--danger)">⚠️ Zona de Perigo</h3>
+            <p style="font-size: 14px; margin-bottom: 15px;">Ao zerar o banco de dados, você <b>perderá permanentemente</b> o controle de histórico de vendas e estoque local (o Aporte também será zerado).</p>
+            <button class="btn" style="background: var(--danger); color: white;" onclick="apagarDados()">🚨 Apagar Todo o Sistema</button>
+        </div>
+    </div>
+
+</div>
+
+<!-- Modal Recibo -->
+<div id="modal">
+    <div class="card glass" style="background: white;">
+        <h3 style="text-align:center; justify-content: center; margin-bottom: 15px;">📄 Recibo Gerado</h3>
+        <textarea id="texto-recibo" rows="8" readonly style="background:#f8fafc; font-size:14px; line-height: 1.5; resize: none;"></textarea>
+        <button class="btn btn-success" onclick="enviarZap()">💬 Enviar pelo WhatsApp</button>
+        <button class="btn btn-outline" onclick="fecharModal()">❌ Fechar</button>
+    </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+    // Configurações do Banco Local
+    const DB_KEY = 'churrasco_b10_v1';
+    let db = JSON.parse(localStorage.getItem(DB_KEY)) || { produtos: [], vendas: [], insumos: [], capital: 0 };
+    if(!db.produtos) db.produtos = [];
+    if(!db.vendas) db.vendas = [];
+    if(!db.insumos) db.insumos = [];
+    if(typeof db.capital !== 'number' || isNaN(db.capital)) db.capital = 0;
+    
+    let chartV = null, chartL = null;
+
+    // Utilitário Monetário
+    const moneyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+
+    // Toast Notifications
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        
+        const icon = type === 'success' ? '✅' : '⚠️';
+        toast.innerHTML = `<span>${icon}</span> <div>${message}</div>`;
+        
+        container.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.classList.add('hide');
+            toast.addEventListener('animationend', () => toast.remove());
+        }, 3000);
+    }
+
+    // Modal Control
+    function fecharModal() {
+        document.getElementById('modal').style.opacity = '0';
+        setTimeout(() => {
+            document.getElementById('modal').classList.remove('show');
+        }, 300);
+    }
+
+    function abrirModal() {
+        const modal = document.getElementById('modal');
+        modal.classList.add('show');
+        requestAnimationFrame(() => {
+            modal.style.opacity = '1';
+        });
+    }
+
+    // Persistência
+    function salvar() {
+        localStorage.setItem(DB_KEY, JSON.stringify(db));
+        render();
+    }
+
+    // Navegação Transparente nas Abas
+    function showTab(e, tabId) {
+        // Manipula Abas
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        
+        // Manipula Botões
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        if (e && e.currentTarget) {
+            e.currentTarget.classList.add('active');
+        } else {
+            document.querySelectorAll('.nav-btn')[0].classList.add('active');
+        }
+
+        // Se for Análises, renderiza os gráficos
+        if(tabId === 'tab-analises') renderGraficos();
+    }
+
+    // Lógica Inclusão de Insumos
+    function addInsumo() {
+        const nome = document.getElementById('i-nome').value.trim();
+        const valor = parseFloat(document.getElementById('i-valor').value);
+
+        if(!nome || isNaN(valor) || valor < 0) {
+            showToast('Informe um nome e valor válidos para a despesa!', 'error');
+            return;
+        }
+
+        const i = { id: Date.now().toString(), nome, valor, data: new Date().toLocaleDateString('pt-BR') };
+        db.insumos.push(i);
+        salvar();
+        
+        showToast('Despesa registrada com sucesso!');
+        document.getElementById('i-nome').value = '';
+        document.getElementById('i-valor').value = '';
+    }
+
+    function deletarInsumo(id) {
+        if(confirm("Tem certeza que deseja excluir este gasto com insumos?")) {
+            db.insumos = db.insumos.filter(i => i.id !== id);
+            salvar();
+            showToast('Gasto excluído!');
+        }
+    }
+
+    // Lógica Inclusão de Produto
+    function addProduto() {
+        const nome = document.getElementById('p-nome').value.trim();
+        const qtd = parseInt(document.getElementById('p-qtd').value) || 0;
+        const custo = parseFloat(document.getElementById('p-custo').value) || 0;
+        const preco = parseFloat(document.getElementById('p-preco').value) || 0;
+        const min = parseInt(document.getElementById('p-min').value) || 2;
+
+        if(!nome) {
+            showToast('O nome do produto é obrigatório!', 'error');
+            document.getElementById('p-nome').focus();
+            return;
+        }
+
+        if(custo < 0 || preco < 0 || qtd < 0) {
+            showToast('Valores não podem ser negativos.', 'error');
+            return;
+        }
+
+        const p = { id: Date.now().toString(), nome, qtd, custo, preco, min };
+        db.produtos.push(p);
+        salvar();
+        
+        showToast('Produto cadastrado com sucesso!');
+        
+        // Limpar os campos do formulário
+        document.getElementById('p-nome').value = '';
+        document.getElementById('p-qtd').value = '';
+        document.getElementById('p-custo').value = '';
+        document.getElementById('p-preco').value = '';
+        document.getElementById('p-min').value = '';
+    }
+
+    function limparProduto() {
+        document.getElementById('p-nome').value = '';
+        document.getElementById('p-qtd').value = '';
+        document.getElementById('p-custo').value = '';
+        document.getElementById('p-preco').value = '';
+        document.getElementById('p-min').value = '';
+    }
+
+    function deletarProduto(id) {
+        if(confirm("Tem certeza que deseja excluir permanentemente este produto do estoque?")) {
+            db.produtos = db.produtos.filter(p => p.id !== id);
+            salvar();
+            showToast('Produto excluído com sucesso!');
+        }
+    }
+
+    // Lógica Lançamento de Venda
+    function vender() {
+        const idProdutoSelect = document.getElementById('v-produto').value;
+        const qtd = parseInt(document.getElementById('v-qtd').value);
+        const tipoStatus = document.getElementById('v-tipo').value;
+        const nomeClienteOriginal = document.getElementById('v-cliente').value.trim();
+        const clienteNome = nomeClienteOriginal || "Consumidor Padrão";
+
+        if(isNaN(qtd) || qtd <= 0) {
+            showToast('Insira uma quantidade válida maior que zero.', 'error');
+            return;
+        }
+
+        const pIdx = db.produtos.findIndex(x => x.id === idProdutoSelect);
+        if(pIdx === -1) {
+            showToast('Você precisa cadastrar e selecionar um produto primeiro.', 'error');
+            return;
+        }
+
+        const item = db.produtos[pIdx];
+        if(item.qtd < qtd) {
+            showToast(`Estoque insuficiente! Só restam ${item.qtd} un. de ${item.nome}`, 'error');
+            return;
+        }
+
+        // Calcula montantes
+        const valorTotal = item.preco * qtd;
+        const lucroBruto = (item.preco - item.custo) * qtd;
+        
+        // Objeto na Venda
+        const v = { 
+            vendaId: Date.now().toString(),
+            item: item.nome, 
+            valor: valorTotal, 
+            lucro: lucroBruto, 
+            qtd: qtd, 
+            status: tipoStatus, 
+            cliente: clienteNome,
+            dataHora: new Date().toLocaleString('pt-BR')
+        };
+        
+        db.vendas.push(v);
+        db.produtos[pIdx].qtd -= qtd; // Atualiza estoque
+        salvar();
+
+        // Limpa form venda (mantem cliente vazio se quiser nova sequencia, qtd volta ao 1)
+        document.getElementById('v-cliente').value = '';
+        document.getElementById('v-qtd').value = '1';
+        
+        showToast('Venda registrada com sucesso!');
+
+        // Cria Recibo Formatado
+        const textoRecibo = `🛍️ *RECIBO DE VENDA*\n` +
+                            `---------------------------\n` +
+                            `Atendimento: ${v.dataHora}\n` +
+                            `👤 Cliente: ${v.cliente}\n` +
+                            `📦 Item: ${v.item} (x${v.qtd})\n` +
+                            `🔖 Tipo: ${v.status === 'pago' ? 'Pago Imediato ✅' : 'Fiado / A Prazo ⏳'}\n` +
+                            `---------------------------\n` +
+                            `💰 *Total Geral:* ${moneyFormatter.format(v.valor)}\n` +
+                            `---------------------------\n` +
+                            `Agradecemos pela preferência!`;
+
+        document.getElementById('texto-recibo').value = textoRecibo;
+        abrirModal();
+    }
+
+    function limparVenda() {
+        document.getElementById('v-cliente').value = '';
+        document.getElementById('v-qtd').value = '1';
+        if(document.getElementById('v-produto').options.length > 0) {
+            document.getElementById('v-produto').selectedIndex = 0;
+        }
+    }
+
+    // Lógica Baixar Fiado
+    function baixarFiado(id) {
+        if(confirm("Deseja confirmar o recebimento deste fiado? O valor contabilizará no Caixa.")) {
+            const index = db.vendas.findIndex(v => v.vendaId === id);
+            if(index !== -1) {
+                const v = db.vendas[index];
+                v.status = 'recebido_fiado';
+                salvar();
+                showToast('Recebimento de fiado registrado com sucesso!');
+                
+                // Abre o Recibo automaticamente para o cliente
+                reabrirRecibo(id);
+            }
+        }
+    }
+
+    // Emitir Recibo de Fiado Recebido
+    function reabrirRecibo(id) {
+        const v = db.vendas.find(vx => vx.vendaId === id);
+        if(v) {
+            const dataEmissao = new Date().toLocaleString('pt-BR');
+            const textoRecibo = `✅ *RECIBO DE PAGAMENTO*\n` +
+                                `---------------------------\n` +
+                                `Emissão: ${dataEmissao}\n` +
+                                `👤 Cliente: ${v.cliente}\n` +
+                                `📦 Ref. Item: ${v.item} (x${v.qtd})\n` +
+                                `---------------------------\n` +
+                                `💰 *Total Pago.* (${v.status === 'recebido_fiado' ? 'Fiado Liquidado' : 'Venda'}): ${moneyFormatter.format(v.valor)}\n` +
+                                `---------------------------\n` +
+                                `Agradecemos a preferência!`;
+            document.getElementById('texto-recibo').value = textoRecibo;
+            abrirModal();
+        }
+    }
+
+    // Aporte Financeiro do Admin
+    function addCapital() { 
+        const val = parseFloat(document.getElementById('cap-valor').value); 
+        if(!isNaN(val) && val > 0) { 
+            db.capital += val; 
+            salvar(); 
+            showToast(`Aporte de ${moneyFormatter.format(val)} registrado!`);
+            document.getElementById('cap-valor').value = '';
+        } else {
+            showToast('Informe um valor acima de zero valido.', 'error');
+        }
+    }
+
+    // Hardcore Wipe DB
+    function apagarDados() {
+        if(confirm("🚨 TEM CERTEZA?\n\nIsso irá apagar todos os Produtos, Vendas e Caixa local permanentemente. Essa ação é IRREVERSÍVEL.")) {
+            if(confirm("Confirmação final: Digite OK para apagar tudo (cancelar para voltar).")) {
+                db = { produtos: [], vendas: [], insumos: [], capital: 0 };
+                salvar();
+                showToast('Banco de dados completamente resetado.');
+            }
+        }
+    }
+
+    // Relatórios Financeiros 
+    function renderGraficos() {
+        const resumo = {};
+        db.vendas.forEach(v => {
+            if(!resumo[v.item]) resumo[v.item] = { qtd: 0, lucro: 0 };
+            resumo[v.item].qtd += v.qtd;
+            resumo[v.item].lucro += v.lucro;
+        });
+
+        const labels = Object.keys(resumo);
+        if(labels.length === 0) {
+            Chart.helpers.each(Chart.instances, function(instance){
+                instance.destroy();
+            }); // limpar em caso de BD zerado
+            return;
+        }
+
+        if(chartV) chartV.destroy();
+        if(chartL) chartL.destroy();
+
+        // Configuração Padrão do Chart.js para o modo Premium
+        Chart.defaults.color = '#4a5568';
+        Chart.defaults.font.family = 'Inter';
+
+        chartV = new Chart(document.getElementById('chartVolume'), {
+            type: 'bar', 
+            data: { 
+                labels, 
+                datasets: [{ 
+                    label: 'Unidades Vendidas', 
+                    data: labels.map(l => resumo[l].qtd), 
+                    backgroundColor: 'rgba(192, 132, 252, 0.8)',
+                    borderColor: '#c084fc',
+                    borderWidth: 1,
+                    borderRadius: 8
+                }] 
+            },
+            options: { 
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        // Cores Bonitas Quentes para o de pizza
+        const pieColors = ['#f97316', '#ef4444', '#c2410c', '#fb923c', '#b91c1c', '#f59e0b'];
+
+        chartL = new Chart(document.getElementById('chartLucro'), {
+            type: 'pie', 
+            data: { 
+                labels, 
+                datasets: [{ 
+                    data: labels.map(l => resumo[l].lucro), 
+                    backgroundColor: pieColors,
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }] 
+            },
+            options: { maintainAspectRatio: false }
+        });
+    }
+
+    // Engine de Renderização Front-End do DOM
+    function render() {
+        // Estatísticas e Dedução de Custo Total
+        const faturamento = db.vendas.reduce((a, b) => a + (Number(b.valor) || 0), 0);
+        const custoInsumos = db.insumos.reduce((a, b) => a + (Number(b.valor) || 0), 0);
+        
+        // Novo Calculo de Despesas: Acumulando os Produtos! Protegendo contra dados legados sem custo ou lucro
+        const custoEstoqueAtual = db.produtos.reduce((a, b) => a + ((Number(b.custo) || 0) * (Number(b.qtd) || 0)), 0);
+        const custoProdutosVendidos = db.vendas.reduce((a, b) => a + ((Number(b.valor) || 0) - (Number(b.lucro) || 0)), 0);
+        const despesasTotais = custoInsumos + custoEstoqueAtual + custoProdutosVendidos;
+        
+        // Lucro Real = Cash Flow considerando tudo que foi investido (Até estoque não vendido)
+        const lucroReal = faturamento - despesasTotais;
+        
+        const fiado = db.vendas.filter(v => v.status === 'fiado').reduce((a, b) => a + (Number(b.valor) || 0), 0);
+        const pago = db.vendas.filter(v => v.status === 'pago' || v.status === 'recebido_fiado').reduce((a, b) => a + (Number(b.valor) || 0), 0);
+        
+        // O Caixa é impactado negativamente pelas Despesas Totais
+        document.getElementById('dash-fiado').innerText = moneyFormatter.format(fiado);
+        // O Caixa real representa Capital inserido + Vendas Recebidas - Tudo que foi investido.
+        document.getElementById('dash-caixa').innerText = moneyFormatter.format(db.capital + pago - despesasTotais);
+        
+        const dashCI = document.getElementById('dash-custo-insumos');
+        if(dashCI) {
+            dashCI.innerText = moneyFormatter.format(despesasTotais);
+            document.getElementById('dash-faturamento').innerText = moneyFormatter.format(faturamento);
+            document.getElementById('dash-lucro-real').innerText = moneyFormatter.format(lucroReal);
+        }
+        
+        // Popula Tabela de Fiados Ativos (Tela Venda)
+        const vendasFiado = db.vendas.filter(v => v.status === 'fiado');
+        const rowFiados = vendasFiado.map(v => {
+            return `<tr>
+                <td><b>${v.cliente}</b><br><span style="font-size:11px;color:var(--text-light)">${v.dataHora}</span></td>
+                <td>${v.item} (x${v.qtd})</td>
+                <td style="color:var(--warning); font-weight:bold;">${moneyFormatter.format(Number(v.valor) || 0)}</td>
+                <td style="text-align:center;">
+                    <button onclick="baixarFiado('${v.vendaId}')" class="btn btn-success" style="padding: 8px 12px; margin: 0; font-size: 12px; height: auto;">✅ Receber</button>
+                </td>
+            </tr>`;
+        }).join('');
+        const corpoF = document.getElementById('corpo-fiados');
+        if(corpoF) corpoF.innerHTML = rowFiados || '<tr><td colspan="4" style="text-align:center;">Nenhuma conta pendente identificada</td></tr>';
+
+        // Popula Tabela de Fiados Recebidos/Pagos
+        const vendasFiadoRecebido = db.vendas.filter(v => v.status === 'recebido_fiado');
+        const rowFiadosRecebidos = vendasFiadoRecebido.map(v => {
+            return `<tr>
+                <td><b>${v.cliente}</b><br><span style="font-size:11px;color:var(--text-light)">${v.dataHora}</span></td>
+                <td>${v.item} (x${v.qtd})</td>
+                <td style="color:var(--success); font-weight:bold;">${moneyFormatter.format(Number(v.valor) || 0)}</td>
+                <td style="text-align:center;">
+                    <button onclick="reabrirRecibo('${v.vendaId}')" class="btn btn-outline" style="padding: 8px 12px; margin: 0; font-size: 12px; height: auto;">📄 Recibo</button>
+                </td>
+            </tr>`;
+        }).join('');
+        const corpoFR = document.getElementById('corpo-fiados-pagos');
+        if(corpoFR) corpoFR.innerHTML = rowFiadosRecebidos || '<tr><td colspan="4" style="text-align:center;">Nenhum histórico de recebimento recente</td></tr>';
+
+        // Popula Status Insumos (Tela Insumos)
+        const rowInsumos = db.insumos.map(i => {
+            return `<tr><td>${i.nome}</td><td>${moneyFormatter.format(Number(i.valor) || 0)}</td><td>${i.data}</td><td style="text-align:center;"><button onclick="deletarInsumo('${i.id}')" style="background:transparent; border:none; cursor:pointer; font-size:18px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'" title="Excluir Despesa">🗑️</button></td></tr>`;
+        }).join('');
+        const corpoI = document.getElementById('corpo-insumos');
+        if(corpoI) corpoI.innerHTML = rowInsumos || '<tr><td colspan="4" style="text-align:center;">Nenhum gasto registrado</td></tr>';
+
+        // Popula Status Estoque (Tela Home)
+        const rowResumo = db.produtos.map(p => {
+            const isDanger = p.qtd <= p.min;
+            const style = isDanger ? 'color: var(--danger); font-weight: bold;' : 'color: var(--success);';
+            const icon = isDanger ? '⚠️ Baixo' : '✅ OK';
+            return `<tr><td>${p.nome}</td><td>${p.qtd}</td><td style="${style}">${icon}</td></tr>`;
+        }).join('');
+        document.getElementById('corpo-resumo').innerHTML = rowResumo || '<tr><td colspan="3" style="text-align:center;">Nenhum produto cadastrado</td></tr>';
+
+        // Popula Lista Todos Produtos (Tela Estoque)
+        const rowProdutos = db.produtos.map(p => {
+            return `<tr><td>${p.nome}</td><td>${moneyFormatter.format(Number(p.custo) || 0)}</td><td>${moneyFormatter.format(Number(p.preco) || 0)}</td><td>${p.qtd}</td><td style="text-align:center;"><button onclick="deletarProduto('${p.id}')" style="background:transparent; border:none; cursor:pointer; font-size:18px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'" title="Excluir Produto">🗑️</button></td></tr>`;
+        }).join('');
+        document.getElementById('corpo-produtos').innerHTML = rowProdutos || '<tr><td colspan="5" style="text-align:center;">Sem produtos cadastrados ainda</td></tr>';
+
+        // Popula Select de Vendas
+        const optionSelect = db.produtos.map(p => `<option value="${p.id}">${p.nome} (Estoque: ${p.qtd}) - ${moneyFormatter.format(p.preco)}</option>`).join('');
+        const selectObj = document.getElementById('v-produto');
+        const holderValue = selectObj.value; // Tenta mante-lo após update se existir
+
+        selectObj.innerHTML = optionSelect;
+        
+        // Restaura selecao antes do re-render caso nao tenha zerado
+        if (holderValue && db.produtos.find(px => String(px.id) === String(holderValue))) {
+            selectObj.value = holderValue;
+        }
+
+        // Caso selecione tab analise ativamente (fallback)
+        if(document.getElementById('tab-analises').classList.contains('active')){
+            renderGraficos();
+        }
+    }
+
+    // Integração Excel SheetJS
+    function exportarExcel() {
+        if(db.produtos.length === 0 && db.vendas.length === 0 && db.insumos.length === 0){
+            showToast('Não há dados para exportar ainda.', 'error');
+            return;
+        }
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(db.produtos), "Estoque");
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(db.vendas), "Historico_Vendas");
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(db.insumos), "Historico_Insumos");
+        
+        let meta = [{ Info: 'Aporte Original (Caixa Adicional)', Valor: db.capital || 0 }];
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(meta), "Resumo_Caixa");
+
+        XLSX.writeFile(wb, `Gestao_Loja_Backup_${new Date().getTime()}.xlsx`);
+        showToast('Backup Excel efetuado com sucesso!');
+    }
+
+    function importarExcel() {
+        const fileInput = document.getElementById('input-excel');
+        const file = fileInput.files[0];
+        if(!file) return showToast('Por favor, selecione um arquivo Excel (.xlsx) antes de restaurar.', 'error');
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const wb = XLSX.read(data, {type: 'array'});
+                
+                const nwProd = wb.Sheets["Estoque"] ? XLSX.utils.sheet_to_json(wb.Sheets["Estoque"]) : [];
+                const nwVendas = wb.Sheets["Historico_Vendas"] ? XLSX.utils.sheet_to_json(wb.Sheets["Historico_Vendas"]) : [];
+                const nwInsumos = wb.Sheets["Historico_Insumos"] ? XLSX.utils.sheet_to_json(wb.Sheets["Historico_Insumos"]) : [];
+                
+                let nwCapital = 0;
+                if(wb.Sheets["Resumo_Caixa"]){
+                    let sheetC = XLSX.utils.sheet_to_json(wb.Sheets["Resumo_Caixa"]);
+                    if(sheetC.length > 0 && sheetC[0].Valor) nwCapital = parseFloat(sheetC[0].Valor) || 0;
+                }
+
+                db.produtos = nwProd;
+                db.vendas = nwVendas;
+                db.insumos = nwInsumos;
+                db.capital = nwCapital;
+                
+                salvar(); 
+                showToast('Backup Excel restaurado. Banco totalmente atualizado!');
+                fileInput.value = ''; // clean file history
+                render();
+            } catch (err) {
+                console.error(err);
+                showToast('Erro ao ler a planilha. Formato incorreto ou arquivo corrompido.', 'error');
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    // Share Externo Actions
+    function enviarZap() { 
+        const link = `https://api.whatsapp.com/send?text=${encodeURIComponent(document.getElementById('texto-recibo').value)}`;
+        window.open(link, '_blank');
+        fecharModal();
+    }
+
+    // Boot Initialization
+    render();
+</script>
+</body>
+</html>

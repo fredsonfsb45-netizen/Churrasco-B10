@@ -1,0 +1,26 @@
+services:
+  # 1. Nosso Backend (API)
+  - type: web
+    name: b10-api
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.0
+
+  # 2. Nosso Frontend (Streamlit)
+    # A interface visual precisa se comunicar com a URL pública gerada para a API
+  - type: web
+    name: b10-painel
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: cd frontend && streamlit run app.py --server.port $PORT --server.address 0.0.0.0
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.0
+      - key: API_URL
+        fromService:
+          type: web
+          name: b10-api
+          envVarKey: RENDER_EXTERNAL_URL
